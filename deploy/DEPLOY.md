@@ -56,8 +56,8 @@ the group membership.
 mkdir -p ~/apps
 cd ~/apps
 git clone https://github.com/Pyrykivil/portfolio.git
-git clone <your-nhg-rag-demo-git-url> nhg-rag-demo
-git clone https://github.com/Pyrykivil/thl-etl.git
+git clone https://github.com/Pyrykivil/nhg-rag-demo.git
+git clone https://github.com/Pyrykivil/THL-etl.git thl-etl
 ```
 
 The deploy bundle itself lives inside the portfolio repo at
