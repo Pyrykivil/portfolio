@@ -30,7 +30,11 @@ services:
       # contact notes in messages/ persist on the host and survive restarts.
       - ../portfolio:/app
     ports:
-      - "8641:8641"
+      # Bound to localhost only: the Cloudflare Tunnel reaches this over the
+      # internal Docker network, so nothing needs to be exposed on the Pi's
+      # public IP. This keeps a shared Pi (roommate's nginx on 80/443) clean
+      # and still lets check.sh curl localhost:8641.
+      - "127.0.0.1:8641:8641"
 
   # ---------------------------------------------------------------------
   # nhg-rag-demo: healthcare RAG Streamlit app. Mirrors that project's own
@@ -54,7 +58,8 @@ services:
       - pdf_data:/app/data
       - audit_data:/app/logs
     ports:
-      - "8501:8501"
+      # localhost only, reached publicly via the tunnel (see web service note)
+      - "127.0.0.1:8501:8501"
 
   rag-ingest:
     image: nhg-rag-demo:latest
@@ -147,7 +152,8 @@ services:
     volumes:
       - metabase_data:/metabase-data
     ports:
-      - "3000:3000"
+      # localhost only, reached publicly via the tunnel (see web service note)
+      - "127.0.0.1:3000:3000"
 
   # ---------------------------------------------------------------------
   # Ingress: Cloudflare Tunnel, replaces port forwarding entirely.
