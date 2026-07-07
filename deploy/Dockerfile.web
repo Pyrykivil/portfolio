@@ -1,0 +1,30 @@
+# Build context is the portfolio repo root (../ from this file), so this
+# Dockerfile can COPY the whole static site plus scripts/serve.py.
+FROM python:3.12-slim-bookworm
+
+WORKDIR /app
+
+# Copy the entire portfolio site (static assets, content.json, scripts/serve.py).
+COPY . .
+
+# Persistence note: content.json (edited via POST /api/content) and any
+# content.backups directory that serve.py writes live inside /app, i.e.
+# inside this same copied tree. A plain image build makes those writes
+# disappear on container restart/recreate because they only exist in the
+# writable container layer.
+#
+# Chosen approach: bind-mount the whole portfolio directory over /app in
+# docker-compose.yml (volumes: - ../portfolio:/app). This is the simplest option
+# for a single-Pi personal site: admin edits write straight back to the
+# host checkout, survive restarts, and "git pull" on the host is all that
+# is needed to update code. The alternative (named volumes scoped to just
+# content.json and content.backups) avoids exposing the whole repo inside
+# the container, but adds volume-seeding complexity for near zero benefit
+# here since this is a single trusted deployment. Bind mount was picked
+# for simplicity per the deployment doc.
+EXPOSE 8641
+
+# ADMIN_PASSWORD is passed in from docker-compose.yml (backed by .env), not
+# set here. serve.py falls back to a default password if it is unset, so
+# always set it via .env before running in production.
+CMD ["python", "scripts/serve.py"]

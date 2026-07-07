@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content admin · Pyry Kiviluoma</title>
+<style>
+  :root {
+    --bg: #05070a;
+    --bg2: #0a1216;
+    --ink: #eef4f3;
+    --muted: #8fa3a1;
+    --teal: #19d3c5;
+    --line: rgba(255, 255, 255, 0.08);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+    padding-bottom: 6rem;
+  }
+  header {
+    padding: 1.6rem 2rem;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  header h1 { font-size: 1.2rem; font-weight: 600; }
+  .key-field { display: flex; align-items: center; gap: 0.6rem; }
+  .key-field label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  main { max-width: 900px; margin: 0 auto; padding: 2rem; }
+  section.block {
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1.6rem;
+  }
+  section.block h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--teal);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+  }
+  .field { margin-bottom: 0.9rem; }
+  .field label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.35rem;
+  }
+  input[type="text"], input[type="number"], input[type="password"], textarea {
+    width: 100%;
+    background: #0d1418;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--ink);
+    padding: 0.55rem 0.7rem;
+    font-family: var(--font);
+    font-size: 0.9rem;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--teal); }
+  textarea { resize: vertical; min-height: 4.5rem; }
+  .row { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+  .row .field { flex: 1; min-width: 140px; }
+  .item-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+  .item-card .remove-btn { margin-top: 0.4rem; }
+  button {
+    font-family: var(--font);
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    border-radius: 6px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.82rem;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  button:hover { border-color: var(--teal); color: var(--teal); }
+  button.add-btn { margin-top: 0.4rem; }
+  button.remove-btn { color: #e07a7a; border-color: rgba(224, 122, 122, 0.3); }
+  button.remove-btn:hover { border-color: #e07a7a; color: #e07a7a; }
+  .save-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: rgba(5, 7, 10, 0.92);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .save-bar-actions { display: flex; gap: 0.7rem; }
+  .save-bar button.primary {
+    background: var(--teal);
+    color: #04211f;
+    border-color: var(--teal);
+    font-weight: 600;
+  }
+  .save-bar button.primary:hover { color: #04211f; }
+  #status { font-size: 0.85rem; color: var(--muted); }
+  #status.ok { color: var(--teal); }
+  #status.error { color: #e07a7a; }
+  .messages-list { margin-top: 0.8rem; }
+  .message-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.8rem;
+  }
+  .message-meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.4rem; }
+  .message-body { font-size: 0.9rem; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Content admin</h1>
+  <div class="key-field">
+    <label for="admin-key">Admin key</label>
+    <input type="password" id="admin-key" placeholder="admin key">
+  </div>
+</header>
+
+<main id="app"></main>
+
+<div class="save-bar">
+  <span id="status"></span>
+  <div class="save-bar-actions">
+    <button id="download-btn">Download content.json</button>
+    <button id="save-btn" class="primary">Save changes</button>
+  </div>
+</div>
+
+<script>
+let content = null;
+
+const KEY_STORAGE = "pk_admin_key";
+const adminKeyInput = document.getElementById("admin-key");
+adminKeyInput.value = localStorage.getItem(KEY_STORAGE) || "";
+adminKeyInput.addEventListener("input", () => {
+  localStorage.setItem(KEY_STORAGE, adminKeyInput.value);
+});
+
+function el(tag, attrs, children) {
+  const node = document.createElement(tag);
+  Object.entries(attrs || {}).forEach(([k, v]) => {
+    if (k === "text") node.textContent = v;
+    else node.setAttribute(k, v);
+  });
+  (children || []).forEach((c) => node.appendChild(c));
+  return node;
+}
+
+function field(labelText, inputEl) {
+  const wrap = el("div", { class: "field" });
+  wrap.appendChild(el("label", { text: labelText }));
+  wrap.appendChild(inputEl);
+  return wrap;
+}
+
+function textInput(value) {
+  const i = el("input", { type: "text" });
+  i.value = value == null ? "" : value;
+  return i;
+}
+
+function numberInput(value) {
+  const i = el("input", { type: "number", step: "any" });
+  i.value = value == null ? "" : value;
+  return i;
+}
+
+function textArea(value) {
+  const t = el("textarea");
+  t.value = value == null ? "" : value;
+  return t;
+}
+
+function removeBtn(onClick) {
+  const b = el("button", { class: "remove-btn", type: "button", text: "Remove" });
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+function addBtn(text, onClick) {
+  const b = el("button", { class: "add-btn", type: "button", text });
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+function block(title) {
+  const b = el("section", { class: "block" });
+  b.appendChild(el("h2", { text: title }));
+  return b;
+}
+
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+
+  /* hero */
+  const heroBlock = block("Hero");
+  const heroKicker = textInput(content.hero.kicker);
+  const heroLine1 = textInput(content.hero.line1);
+  const heroLine2 = textInput(content.hero.line2);
+  const heroSubtitle = textInput(content.hero.subtitle);
+  const heroNow = textInput(content.hero.now);
+  heroBlock.appendChild(field("Kicker", heroKicker));
+  heroBlock.appendChild(field("Line 1", heroLine1));
+  heroBlock.appendChild(field("Line 2", heroLine2));
+  heroBlock.appendChild(field("Subtitle", heroSubtitle));
+  heroBlock.appendChild(field("Now", heroNow));
+  app.appendChild(heroBlock);
+
+  /* stats */
+  const statsBlock = block("Stats");
+  const statsList = el("div");
+  statsBlock.appendChild(statsList);
+  function renderStats() {
+    statsList.innerHTML = "";
+    content.stats.forEach((stat, i) => {
+      const card = el("div", { class: "item-card" });
+      const row = el("div", { class: "row" });
+      const valueInput = numberInput(stat.value);
+      const decimalsInput = numberInput(stat.decimals);
+      const unitInput = textInput(stat.unit);
+      const labelInput = textInput(stat.label);
+      valueInput.addEventListener("input", () => { stat.value = valueInput.value; });
+      decimalsInput.addEventListener("input", () => { stat.decimals = decimalsInput.value; });
+      unitInput.addEventListener("input", () => { stat.unit = unitInput.value; });
+      labelInput.addEventListener("input", () => { stat.label = labelInput.value; });
+      row.appendChild(field("Value", valueInput));
+      row.appendChild(field("Decimals", decimalsInput));
+      row.appendChild(field("Unit", unitInput));
+      row.appendChild(field("Label", labelInput));
+      card.appendChild(row);
+      card.appendChild(removeBtn(() => { content.stats.splice(i, 1); renderStats(); }));
+      statsList.appendChild(card);
+    });
+  }
+  renderStats();
+  statsBlock.appendChild(addBtn("Add stat", () => {
+    content.stats.push({ value: 0, decimals: 0, unit: "", label: "" });
+    renderStats();
+  }));
+  app.appendChild(statsBlock);
+
+  /* pillars */
+  const pillarsBlock = block("Pillars");
+  const pillarsTitle = textInput(content.pillars.kicker);
+  pillarsTitle.addEventListener("input", () => { content.pillars.kicker = pillarsTitle.value; });
+  pillarsBlock.appendChild(field("Kicker", pillarsTitle));
+  const pillarsList = el("div");
+  pillarsBlock.appendChild(pillarsList);
+  function renderPillars() {
+    pillarsList.innerHTML = "";
+    content.pillars.items.forEach((item, i) => {
+      const card = el("div", { class: "item-card" });
+      const titleInput = textInput(item.title);
+      const textInputEl = textArea(item.text);
+      titleInput.addEventListener("input", () => { item.title = titleInput.value; });
+      textInputEl.addEventListener("input", () => { item.text = textInputEl.value; });
+      card.appendChild(field("Title", titleInput));
+      card.appendChild(field("Text", textInputEl));
+      card.appendChild(removeBtn(() => { content.pillars.items.splice(i, 1); renderPillars(); }));
+      pillarsList.appendChild(card);
+    });
+  }
+  renderPillars();
+  pillarsBlock.appendChild(addBtn("Add pillar", () => {
+    content.pillars.items.push({ title: "", text: "" });
+    renderPillars();
+  }));
+  app.appendChild(pillarsBlock);
+
+  /* work */
+  const workBlock = block("Work");
+  const workKicker = textInput(content.work.kicker);
+  const workTitle = textInput(content.work.title);
+  workKicker.addEventListener("input", () => { content.work.kicker = workKicker.value; });
+  workTitle.addEventListener("input", () => { content.work.title = workTitle.value; });
+  workBlock.appendChild(field("Kicker", workKicker));
+  workBlock.appendChild(field("Title", workTitle));
+  const cardsList = el("div");
+  workBlock.appendChild(cardsList);
+  function parseYouTubeId(str) {
+    const s = (str || "").trim();
+    if (!s) return null;
+    const m = s.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/) || s.match(/^([A-Za-z0-9_-]{11})$/);
+    return m ? m[1] : null;
+  }
+  function renderCards() {
+    cardsList.innerHTML = "";
+    content.work.cards.forEach((card, i) => {
+      const cardEl = el("div", { class: "item-card" });
+      const titleInput = textInput(card.title);
+      const textInputEl = textArea(card.text);
+      const tagsInput = textInput((card.tags || []).join(", "));
+      const linkLabelInput = textInput(card.link ? card.link.label : "");
+      const linkHrefInput = textInput(card.link ? card.link.href : "");
+      titleInput.addEventListener("input", () => { card.title = titleInput.value; });
+      textInputEl.addEventListener("input", () => { card.text = textInputEl.value; });
+      tagsInput.addEventListener("input", () => {
+        card.tags = tagsInput.value.split(",").map((t) => t.trim()).filter((t) => t);
+      });
+      linkLabelInput.addEventListener("input", () => {
+        card.link = card.link || { label: "", href: "" };
+        card.link.label = linkLabelInput.value;
+      });
+      linkHrefInput.addEventListener("input", () => {
+        card.link = card.link || { label: "", href: "" };
+        card.link.href = linkHrefInput.value;
+      });
+      const ytInput = textInput(card.youtube || "");
+      ytInput.addEventListener("input", () => { card.youtube = parseYouTubeId(ytInput.value); });
+      cardEl.appendChild(field("Title", titleInput));
+      cardEl.appendChild(field("Text", textInputEl));
+      cardEl.appendChild(field("Tags (comma-separated)", tagsInput));
+      const linkRow = el("div", { class: "row" });
+      linkRow.appendChild(field("Link label", linkLabelInput));
+      linkRow.appendChild(field("Link href", linkHrefInput));
+      cardEl.appendChild(linkRow);
+      cardEl.appendChild(field("YouTube video URL or ID", ytInput));
+      cardEl.appendChild(removeBtn(() => { content.work.cards.splice(i, 1); renderCards(); }));
+      cardsList.appendChild(cardEl);
+    });
+  }
+  renderCards();
+  workBlock.appendChild(addBtn("Add card", () => {
+    content.work.cards.push({ title: "", text: "", tags: [], link: null, youtube: null });
+    renderCards();
+  }));
+  app.appendChild(workBlock);
+
+  /* skills */
+  const skillsBlock = block("Skills");
+  const skillsKicker = textInput(content.skills.kicker);
+  const skillsTitle = textInput(content.skills.title);
+  skillsKicker.addEventListener("input", () => { content.skills.kicker = skillsKicker.value; });
+  skillsTitle.addEventListener("input", () => { content.skills.title = skillsTitle.value; });
+  skillsBlock.appendChild(field("Kicker", skillsKicker));
+  skillsBlock.appendChild(field("Title", skillsTitle));
+  const groupsList = el("div");
+  skillsBlock.appendChild(groupsList);
+  function renderGroups() {
+    groupsList.innerHTML = "";
+    content.skills.groups.forEach((group, i) => {
+      const groupEl = el("div", { class: "item-card" });
+      const categoryInput = textInput(group.category);
+      const itemsInput = textInput((group.items || []).join(", "));
+      categoryInput.addEventListener("input", () => { group.category = categoryInput.value; });
+      itemsInput.addEventListener("input", () => {
+        group.items = itemsInput.value.split(",").map((t) => t.trim()).filter((t) => t);
+      });
+      groupEl.appendChild(field("Category", categoryInput));
+      groupEl.appendChild(field("Items (comma-separated)", itemsInput));
+      groupEl.appendChild(removeBtn(() => { content.skills.groups.splice(i, 1); renderGroups(); }));
+      groupsList.appendChild(groupEl);
+    });
+  }
+  renderGroups();
+  skillsBlock.appendChild(addBtn("Add group", () => {
+    content.skills.groups.push({ category: "", items: [] });
+    renderGroups();
+  }));
+  app.appendChild(skillsBlock);
+
+  /* experience */
+  const expBlock = block("Experience");
+  const expKicker = textInput(content.experience.kicker);
+  const expTitle = textInput(content.experience.title);
+  expKicker.addEventListener("input", () => { content.experience.kicker = expKicker.value; });
+  expTitle.addEventListener("input", () => { content.experience.title = expTitle.value; });
+  expBlock.appendChild(field("Kicker", expKicker));
+  expBlock.appendChild(field("Title", expTitle));
+  const rowsList = el("div");
+  expBlock.appendChild(rowsList);
+  function renderRows() {
+    rowsList.innerHTML = "";
+    content.experience.rows.forEach((row, i) => {
+      const rowEl = el("div", { class: "item-card" });
+      const orgInput = textInput(row.org);
+      const roleInput = textInput(row.role);
+      const dateInput = textInput(row.date);
+      orgInput.addEventListener("input", () => { row.org = orgInput.value; });
+      roleInput.addEventListener("input", () => { row.role = roleInput.value; });
+      dateInput.addEventListener("input", () => { row.date = dateInput.value; });
+      rowEl.appendChild(field("Organization", orgInput));
+      rowEl.appendChild(field("Role", roleInput));
+      rowEl.appendChild(field("Date", dateInput));
+      rowEl.appendChild(removeBtn(() => { content.experience.rows.splice(i, 1); renderRows(); }));
+      rowsList.appendChild(rowEl);
+    });
+  }
+  renderRows();
+  expBlock.appendChild(addBtn("Add row", () => {
+    content.experience.rows.push({ org: "", role: "", date: "" });
+    renderRows();
+  }));
+  app.appendChild(expBlock);
+
+  /* finale */
+  const finaleBlock = block("Finale");
+  const finaleKicker = textInput(content.finale.kicker);
+  const finaleTitlePre = textInput(content.finale.titlePre);
+  const finaleTitleEm = textInput(content.finale.titleEm);
+  const finaleTitlePost = textInput(content.finale.titlePost);
+  const finalePrimaryLabel = textInput(content.finale.primary.label);
+  const finalePrimaryHref = textInput(content.finale.primary.href);
+  const finaleSecondaryLabel = textInput(content.finale.secondary.label);
+  const finaleSecondaryHref = textInput(content.finale.secondary.href);
+  finaleKicker.addEventListener("input", () => { content.finale.kicker = finaleKicker.value; });
+  finaleTitlePre.addEventListener("input", () => { content.finale.titlePre = finaleTitlePre.value; });
+  finaleTitleEm.addEventListener("input", () => { content.finale.titleEm = finaleTitleEm.value; });
+  finaleTitlePost.addEventListener("input", () => { content.finale.titlePost = finaleTitlePost.value; });
+  finalePrimaryLabel.addEventListener("input", () => { content.finale.primary.label = finalePrimaryLabel.value; });
+  finalePrimaryHref.addEventListener("input", () => { content.finale.primary.href = finalePrimaryHref.value; });
+  finaleSecondaryLabel.addEventListener("input", () => { content.finale.secondary.label = finaleSecondaryLabel.value; });
+  finaleSecondaryHref.addEventListener("input", () => { content.finale.secondary.href = finaleSecondaryHref.value; });
+  finaleBlock.appendChild(field("Kicker", finaleKicker));
+  finaleBlock.appendChild(field("Title (pre)", finaleTitlePre));
+  finaleBlock.appendChild(field("Title (emphasized)", finaleTitleEm));
+  finaleBlock.appendChild(field("Title (post)", finaleTitlePost));
+  const finalePrimaryRow = el("div", { class: "row" });
+  finalePrimaryRow.appendChild(field("Primary button label", finalePrimaryLabel));
+  finalePrimaryRow.appendChild(field("Primary button href", finalePrimaryHref));
+  finaleBlock.appendChild(finalePrimaryRow);
+  const finaleSecondaryRow = el("div", { class: "row" });
+  finaleSecondaryRow.appendChild(field("Secondary button label", finaleSecondaryLabel));
+  finaleSecondaryRow.appendChild(field("Secondary button href", finaleSecondaryHref));
+  finaleBlock.appendChild(finaleSecondaryRow);
+  app.appendChild(finaleBlock);
+
+  /* footer */
+  const footerBlock = block("Footer");
+  const footerCopyright = textInput(content.footer.copyright);
+  const footerEmail = textInput(content.footer.email);
+  const footerLinkedin = textInput(content.footer.linkedin);
+  footerCopyright.addEventListener("input", () => { content.footer.copyright = footerCopyright.value; });
+  footerEmail.addEventListener("input", () => { content.footer.email = footerEmail.value; });
+  footerLinkedin.addEventListener("input", () => { content.footer.linkedin = footerLinkedin.value; });
+  footerBlock.appendChild(field("Copyright", footerCopyright));
+  footerBlock.appendChild(field("Email", footerEmail));
+  footerBlock.appendChild(field("LinkedIn", footerLinkedin));
+  app.appendChild(footerBlock);
+
+  /* messages (contact notes) */
+  const messagesBlock = block("Messages");
+  const messagesList = el("div", { class: "messages-list" });
+  const loadMessagesBtn = addBtn("Load messages", () => {
+    messagesList.textContent = "Loading...";
+    fetch("/api/messages", { headers: { "X-Admin-Key": adminKeyInput.value } })
+      .then((res) => {
+        if (!res.ok) return res.text().then((t) => { throw new Error(t || ("Error " + res.status)); });
+        return res.json();
+      })
+      .then((items) => {
+        messagesList.innerHTML = "";
+        if (!items.length) { messagesList.textContent = "No messages yet."; return; }
+        items.slice().reverse().forEach((m) => {
+          const when = (m.ts || "").replace("T", " ").slice(0, 16);
+          const card = el("div", { class: "message-card" });
+          card.appendChild(el("div", { class: "message-meta", text: when + "  ·  " + (m.name || "") + "  ·  " + (m.email || "") }));
+          card.appendChild(el("div", { class: "message-body", text: m.message || "" }));
+          messagesList.appendChild(card);
+        });
+      })
+      .catch((e) => { messagesList.textContent = e.message; });
+  });
+  messagesBlock.appendChild(loadMessagesBtn);
+  messagesBlock.appendChild(messagesList);
+  app.appendChild(messagesBlock);
+}
+
+function assembleContent() {
+  /* stats: parse numbers */
+  content.stats.forEach((stat) => {
+    stat.value = parseFloat(stat.value) || 0;
+    stat.decimals = parseInt(stat.decimals, 10) || 0;
+  });
+  /* work cards: empty link becomes null */
+  content.work.cards.forEach((card) => {
+    if (card.link && !card.link.label && !card.link.href) card.link = null;
+  });
+  return content;
+}
+
+function setStatus(message, kind) {
+  const status = document.getElementById("status");
+  status.textContent = message;
+  status.className = kind || "";
+}
+
+async function loadInitial() {
+  try {
+    const res = await fetch("/content.json?v=" + Date.now());
+    content = await res.json();
+    render();
+  } catch (e) {
+    setStatus("Failed to load content.json: " + e.message, "error");
+  }
+}
+
+document.getElementById("save-btn").addEventListener("click", async () => {
+  const payload = assembleContent();
+  setStatus("Saving...");
+  try {
+    const res = await fetch("/api/content", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Key": adminKeyInput.value
+      },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      setStatus("Saved. Reload the site to see changes.", "ok");
+    } else {
+      const text = await res.text();
+      setStatus(text || ("Save failed (" + res.status + ")"), "error");
+    }
+  } catch (e) {
+    setStatus("Save failed: " + e.message, "error");
+  }
+});
+
+document.getElementById("download-btn").addEventListener("click", () => {
+  const payload = assembleContent();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "content.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+loadInitial();
+</script>
+</body>
+</html>

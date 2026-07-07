@@ -1,0 +1,198 @@
+{
+  "hero": {
+    "kicker": "AI Engineer · Healthcare",
+    "line1": "PYRY",
+    "line2": "KIVILUOMA",
+    "subtitle": "AI solutions for healthcare decision-making",
+    "now": "Now: test automation at GE Healthcare R&D · Automation & Robotics at Aalto University"
+  },
+  "stats": [
+    {
+      "value": 4.5,
+      "decimals": 1,
+      "unit": "/ 5.0",
+      "label": "Aalto GPA"
+    },
+    {
+      "value": 3,
+      "decimals": 0,
+      "unit": "",
+      "label": "Production systems in healthcare"
+    },
+    {
+      "value": 1.5,
+      "decimals": 1,
+      "unit": "x",
+      "label": "Study pace while working two jobs"
+    }
+  ],
+  "pillars": {
+    "kicker": "What I do",
+    "items": [
+      {
+        "title": "AI Decision Support Systems",
+        "text": "RAG assistants and anomaly detection that clinicians can trace, audit and trust."
+      },
+      {
+        "title": "Test Automation & Quality",
+        "text": "Production-grade automated testing for medical device R&D. Quality that holds up in regulated environments."
+      },
+      {
+        "title": "Teaching & Explaining Complex Things",
+        "text": "Teaching assistant at Aalto: probability and statistics, classical physics, and electricity and magnetism. I make hard concepts land."
+      }
+    ]
+  },
+  "work": {
+    "kicker": "Selected work",
+    "title": "Built for clinical reality",
+    "cards": [
+      {
+        "title": "THL Health Data ETL",
+        "text": "Full pipeline on real primary care visit data from THL's Avohilmo API: PostgreSQL staging and analytics layers, Llama 3.1 anomaly detection, Metabase dashboards.",
+        "tags": [
+          "Python",
+          "PostgreSQL",
+          "Docker",
+          "Metabase"
+        ],
+        "link": {
+          "label": "View on GitHub",
+          "href": "https://github.com/Pyrykivil/thl-etl"
+        },
+        "youtube": null
+      },
+      {
+        "title": "Live ECG Analyzer",
+        "text": "Real-time medical signal processing for cardiac monitoring.",
+        "tags": [
+          "Signal processing",
+          "Real-time",
+          "Python"
+        ],
+        "link": null,
+        "youtube": null
+      },
+      {
+        "title": "GE Healthcare Test Automation",
+        "text": "Performance and reliability testing for medical devices in R&D. Automated Python and Robot Framework suites, plus a waveform analysis tool I built that is now used in the verification process.",
+        "tags": [
+          "Robot Framework",
+          "Python",
+          "Jenkins",
+          "CI/CD"
+        ],
+        "link": null,
+        "youtube": null
+      },
+      {
+        "title": "Healthcare RAG Assistant",
+        "text": "Source-traceable answers from clinical care guidelines. Every response cites document and page, with a full audit log for EU AI Act compliance.",
+        "tags": [
+          "LangChain",
+          "ChromaDB",
+          "RAG",
+          "Docker"
+        ],
+        "link": null,
+        "youtube": null
+      }
+    ]
+  },
+  "skills": {
+    "kicker": "Toolbox",
+    "title": "Skills",
+    "groups": [
+      {
+        "category": "Programming & Data",
+        "items": [
+          "Python (pandas, NumPy, SQLAlchemy)",
+          "SQL & PostgreSQL",
+          "Robot Framework",
+          "Signal processing"
+        ]
+      },
+      {
+        "category": "Data Engineering",
+        "items": [
+          "ETL pipelines",
+          "PostgreSQL data modeling",
+          "ChromaDB",
+          "Metabase",
+          "Grafana"
+        ]
+      },
+      {
+        "category": "DevOps & Tools",
+        "items": [
+          "Linux",
+          "Git",
+          "Docker",
+          "Jenkins",
+          "CI/CD",
+          "SSH"
+        ]
+      },
+      {
+        "category": "AI & LLM",
+        "items": [
+          "LLM APIs (Groq, OpenAI, Gemini)",
+          "LangChain",
+          "RAG",
+          "Claude Code",
+          "Copilot"
+        ]
+      }
+    ]
+  },
+  "experience": {
+    "kicker": "Background",
+    "title": "Experience",
+    "rows": [
+      {
+        "org": "GE Healthcare",
+        "role": "Performance & Reliability Testing Intern, R&D software verification",
+        "date": "Feb 2026 - Present"
+      },
+      {
+        "org": "Aalto University",
+        "role": "Teaching Assistant: Classical Physics, Electricity & Magnetism, Probability & Statistics",
+        "date": "Aug 2025 - Apr 2026"
+      },
+      {
+        "org": "Thermo Fisher Scientific",
+        "role": "Senior Manufacturing Technician, IVD Automation · GMP environment, 100k€+ customer delivery",
+        "date": "May - Aug 2025"
+      },
+      {
+        "org": "Guild of Automation and Systems Technology",
+        "role": "Corporate Relations · 10k€+ in partnerships with Nokia, Veikkaus and Thermo Fisher",
+        "date": "2024 - Present"
+      },
+      {
+        "org": "Aalto University",
+        "role": "BSc Automation & Robotics · GPA 4.5 / 5 · minor in Industrial Engineering",
+        "date": "2024 - Present"
+      }
+    ]
+  },
+  "finale": {
+    "kicker": "Available for healthcare AI projects",
+    "titlePre": "Let's build your next",
+    "titleEm": "healthcare AI",
+    "titlePost": "solution",
+    "primary": {
+      "label": "Schedule a call",
+      "href": "mailto:pyry.kiviluoma@aalto.fi?subject=Healthcare%20AI%20project"
+    },
+    "secondary": {
+      "label": "See work",
+      "href": "#work"
+    }
+  },
+  "footer": {
+    "copyright": "(c) 2026 Pyry Kiviluoma",
+    "email": "pyry.kiviluoma@aalto.fi",
+    "linkedin": "https://www.linkedin.com/in/pyry-kiviluoma-0bbba426a/"
+  }
+}

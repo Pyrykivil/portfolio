@@ -1,0 +1,177 @@
+# Deployment bundle for the Raspberry Pi. Run from ~/apps/deploy.
+# Assumes sibling checkouts at ~/apps/portfolio, ~/apps/nhg-rag-demo, ~/apps/thl-etl
+# (see DEPLOY.md for the exact layout and clone commands).
+#
+# One-off jobs (rag-ingest, etl-pipeline) are gated behind the "jobs" profile so
+# they do NOT start on a plain "docker compose up -d". Run them explicitly with:
+#   docker compose --profile jobs run --rm rag-ingest
+#   docker compose --profile jobs run --rm etl-pipeline
+
+services:
+  # ---------------------------------------------------------------------
+  # Portfolio static site (own project, portfolio/scripts/serve.py)
+  # ---------------------------------------------------------------------
+  web:
+    build:
+      context: ../portfolio
+      dockerfile: ../deploy/Dockerfile.web
+    container_name: portfolio_web
+    restart: unless-stopped
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      # Optional: contact-note email delivery (notes are stored either way).
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      CONTACT_TO: ${CONTACT_TO:-pyry.kiviluoma@aalto.fi}
+    volumes:
+      # Bind mount so admin edits to content.json / content.backups and
+      # contact notes in messages/ persist on the host and survive restarts.
+      - ../portfolio:/app
+    ports:
+      - "8641:8641"
+
+  # ---------------------------------------------------------------------
+  # nhg-rag-demo: healthcare RAG Streamlit app. Mirrors that project's own
+  # docker-compose.yml (services "app" and "ingest", same image, same
+  # named volumes: chroma_data, pdf_data, audit_data). The project's own
+  # "ollama" service/profile is intentionally not mirrored here: this bundle
+  # targets the Groq cloud LLM path (LLM_PROVIDER=groq, the demo path),
+  # not the fully-local Ollama production path.
+  # ---------------------------------------------------------------------
+  rag:
+    image: nhg-rag-demo:latest
+    build:
+      context: ../nhg-rag-demo
+    container_name: rag_app
+    restart: unless-stopped
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      AUDIT_LOG_PATH: /app/logs/audit_log.jsonl
+    volumes:
+      - chroma_data:/app/chroma_db
+      - pdf_data:/app/data
+      - audit_data:/app/logs
+    ports:
+      - "8501:8501"
+
+  rag-ingest:
+    image: nhg-rag-demo:latest
+    build:
+      context: ../nhg-rag-demo
+    container_name: rag_ingest
+    profiles: ["jobs"]
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      AUDIT_LOG_PATH: /app/logs/audit_log.jsonl
+    volumes:
+      - chroma_data:/app/chroma_db
+      - pdf_data:/app/data
+      - audit_data:/app/logs
+    command: python ingest.py
+
+  # ---------------------------------------------------------------------
+  # thl-etl: PostgreSQL + Metabase, mirrored from that project's own
+  # docker-compose.yml (postgres 16-alpine with sql/ mounted to
+  # docker-entrypoint-initdb.d, metabase pointed at the same postgres
+  # instance). The pipeline itself is NOT part of that project's compose
+  # file (its README runs pipeline.extract/transform/load/ai_summary with
+  # plain "python -m", against POSTGRES_HOST=localhost for local dev). For
+  # this bundle, etl-pipeline is added as a one-off job service, built from
+  # thl-etl's own Dockerfile, wired to POSTGRES_HOST=etl-db, and chains all
+  # four pipeline steps so it can be run with one command via compose.
+  # ---------------------------------------------------------------------
+  etl-db:
+    image: postgres:16-alpine
+    container_name: thl_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../thl-etl/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  etl-pipeline:
+    build:
+      context: ../thl-etl
+    container_name: thl_pipeline
+    profiles: ["jobs"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: etl-db
+      POSTGRES_PORT: 5432
+      GROQ_API_KEY: ${GROQ_API_KEY}
+    depends_on:
+      etl-db:
+        condition: service_healthy
+    command: >
+      sh -c "python -m pipeline.extract &&
+             python -m pipeline.transform &&
+             python -m pipeline.load &&
+             python -m pipeline.ai_summary"
+
+  # metabase/metabase has no official arm64 build (linux/amd64 only as of
+  # this writing). On a 64-bit Raspberry Pi OS host, Docker's amd64 image
+  # runs under qemu emulation automatically if binfmt/qemu-user-static is
+  # set up (Docker Desktop-based Pi images and most recent Raspberry Pi OS
+  # + Docker Engine installs enable this by default via
+  # tonistiigi/binfmt, see DEPLOY.md). This works but is slower to start
+  # and heavier on RAM/CPU than a native image. If emulation is not
+  # available or too slow on your Pi, switch this image to the
+  # community arm64 build instead: metabase/metabase-arm64:latest, or navikt
+  # equivalent maintained forks (documented in DEPLOY.md).
+  metabase:
+    image: metabase/metabase:latest
+    container_name: thl_metabase
+    restart: unless-stopped
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${POSTGRES_USER}
+      MB_DB_PASS: ${POSTGRES_PASSWORD}
+      MB_DB_HOST: etl-db
+    depends_on:
+      etl-db:
+        condition: service_healthy
+    volumes:
+      - metabase_data:/metabase-data
+    ports:
+      - "3000:3000"
+
+  # ---------------------------------------------------------------------
+  # Ingress: Cloudflare Tunnel, replaces port forwarding entirely.
+  # Public hostnames -> internal service:port are mapped in the Cloudflare
+  # Zero Trust dashboard (see DEPLOY.md), not in this file:
+  #   pyrykiviluoma.fi      -> web:8641
+  #   rag.pyrykiviluoma.fi  -> rag:8501
+  #   etl.pyrykiviluoma.fi  -> metabase:3000
+  # ---------------------------------------------------------------------
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on:
+      - web
+      - rag
+      - metabase
+
+volumes:
+  chroma_data:
+  pdf_data:
+  audit_data:
+  postgres_data:
+  metabase_data:
