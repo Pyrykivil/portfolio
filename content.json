@@ -113,8 +113,7 @@
         "title": "Healthcare RAG Assistant",
         "text": "Ask a clinical question and get an answer grounded in Kaypa hoito care guidelines, with the source document and page cited for every claim.",
         "url": "https://rag.pyrykiviluoma.fi/?embed=true",
-        "cta": "Launch assistant",
-        "zoom": 1.2
+        "cta": "Launch assistant"
       }
     ]
   },
