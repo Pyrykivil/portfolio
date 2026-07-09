@@ -4,7 +4,7 @@
   --bg: #05070a;
   --bg2: #0a1216;
   --ink: #eef4f3;
-  --muted: #8fa3a1;
+  --muted: #b0c3c1;
   --teal: #19d3c5;
   --teal-deep: #0b6a66;
   --line: rgba(255, 255, 255, 0.08);
@@ -20,8 +20,8 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--body);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 17px;
+  line-height: 1.65;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -186,13 +186,14 @@ body::after {
 }
 .hero-sub {
   margin-top: 1.8rem;
-  font-size: clamp(1rem, 1.7vw, 1.35rem);
-  font-weight: 400;
+  font-size: clamp(1.1rem, 1.9vw, 1.45rem);
+  font-weight: 500;
   letter-spacing: 0.02em;
   color: var(--muted);
 }
 .hero-now {
-  font-size: 0.85rem;
+  font-size: 1rem;
+  font-weight: 500;
   color: var(--muted);
   margin-top: 0.9rem;
   letter-spacing: 0.04em;
@@ -292,7 +293,8 @@ body::after {
 .pillar p {
   color: var(--muted);
   max-width: 52ch;
-  font-size: clamp(0.95rem, 1.3vw, 1.1rem);
+  font-size: clamp(1.08rem, 1.5vw, 1.25rem);
+  font-weight: 500;
 }
 
 /* ---------- work ---------- */
@@ -341,7 +343,7 @@ body::after {
   line-height: 1.15;
   margin: 0.7rem 0 0.6rem;
 }
-.card p { color: var(--muted); font-size: 0.98rem; }
+.card p { color: var(--muted); font-size: 1.06rem; font-weight: 500; }
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -417,8 +419,8 @@ body::after {
 }
 .demo-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.6rem;
+  grid-template-columns: 1fr;
+  gap: 2.4rem;
 }
 .demo {
   display: flex;
@@ -436,10 +438,10 @@ body::after {
   line-height: 1.15;
   margin-bottom: 0.6rem;
 }
-.demo-head p { color: var(--muted); font-size: 0.98rem; }
+.demo-head p { color: var(--muted); font-size: 1.06rem; font-weight: 500; }
 .demo-frame {
   position: relative;
-  aspect-ratio: 16 / 10;
+  height: clamp(460px, 82vh, 900px);
   margin: 0 1.2rem 1.2rem;
   border-radius: 10px;
   overflow: hidden;
@@ -512,7 +514,8 @@ body::after {
 }
 .exp-role {
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  font-weight: 500;
 }
 .exp-date {
   color: var(--muted);
@@ -745,5 +748,8 @@ body.modal-open { overflow: hidden; }
   .nav-links { gap: 1.4rem; }
   .exp-row { grid-template-columns: 1fr; gap: 0.3rem; }
   .skill-groups { grid-template-columns: repeat(2, 1fr); }
-  .demo-grid { grid-template-columns: 1fr; }
+  /* larger body copy for phone readability */
+  .hero-sub { font-size: 1.2rem; }
+  .pillar p, .card p, .demo-head p, .exp-role { font-size: 1.12rem; }
+  .tags li, .skill-group .tags li { font-size: 0.74rem; }
 }
