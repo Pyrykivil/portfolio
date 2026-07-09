@@ -408,14 +408,20 @@ function render() {
         const textInputEl = textArea(demo.text);
         const urlInput = textInput(demo.url);
         const ctaInput = textInput(demo.cta);
+        const zoomInput = numberInput(demo.zoom);
         titleInput.addEventListener("input", () => { demo.title = titleInput.value; });
         textInputEl.addEventListener("input", () => { demo.text = textInputEl.value; });
         urlInput.addEventListener("input", () => { demo.url = urlInput.value.trim(); });
         ctaInput.addEventListener("input", () => { demo.cta = ctaInput.value; });
+        zoomInput.addEventListener("input", () => {
+          const z = parseFloat(zoomInput.value);
+          demo.zoom = z > 1 ? z : undefined;
+        });
         demoEl.appendChild(field("Title", titleInput));
         demoEl.appendChild(field("Text", textInputEl));
         demoEl.appendChild(field("Embed URL (iframe src)", urlInput));
         demoEl.appendChild(field("Button label", ctaInput));
+        demoEl.appendChild(field("Zoom (e.g. 1.2, blank = none)", zoomInput));
         demoEl.appendChild(removeBtn(() => { content.demos.items.splice(i, 1); renderDemos(); }));
         demosList.appendChild(demoEl);
       });

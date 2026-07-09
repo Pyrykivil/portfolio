@@ -118,7 +118,7 @@ function renderContent(c) {
           <h3>${demo.title}</h3>
           <p>${demo.text}</p>
         </div>
-        <div class="demo-frame" data-src="${demo.url || ""}">
+        <div class="demo-frame" data-src="${demo.url || ""}" data-zoom="${demo.zoom || ""}">
           <div class="demo-preview">${launch}</div>
         </div>`;
       demoGrid.appendChild(article);
@@ -130,8 +130,13 @@ function renderContent(c) {
       const frame = btn.closest(".demo-frame");
       if (!frame || frame.classList.contains("loaded") || !frame.dataset.src) return;
       frame.classList.add("loaded");
+      /* optional zoom: render the iframe at a smaller area, then scale it up */
+      const zoom = parseFloat(frame.dataset.zoom);
+      const style = zoom > 1
+        ? ` style="width:${(100 / zoom).toFixed(2)}%;height:${(100 / zoom).toFixed(2)}%;transform:scale(${zoom});transform-origin:0 0"`
+        : "";
       frame.innerHTML =
-        `<iframe src="${frame.dataset.src}" allow="fullscreen" loading="lazy"></iframe>`;
+        `<iframe src="${frame.dataset.src}"${style} allow="fullscreen" loading="lazy"></iframe>`;
     });
   }
 
