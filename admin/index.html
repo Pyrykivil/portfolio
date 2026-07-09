@@ -389,6 +389,45 @@ function render() {
   }));
   app.appendChild(skillsBlock);
 
+  /* live demos */
+  if (content.demos) {
+    const demosBlock = block("Live demos");
+    const demosKicker = textInput(content.demos.kicker);
+    const demosTitle = textInput(content.demos.title);
+    demosKicker.addEventListener("input", () => { content.demos.kicker = demosKicker.value; });
+    demosTitle.addEventListener("input", () => { content.demos.title = demosTitle.value; });
+    demosBlock.appendChild(field("Kicker", demosKicker));
+    demosBlock.appendChild(field("Title", demosTitle));
+    const demosList = el("div");
+    demosBlock.appendChild(demosList);
+    function renderDemos() {
+      demosList.innerHTML = "";
+      content.demos.items.forEach((demo, i) => {
+        const demoEl = el("div", { class: "item-card" });
+        const titleInput = textInput(demo.title);
+        const textInputEl = textArea(demo.text);
+        const urlInput = textInput(demo.url);
+        const ctaInput = textInput(demo.cta);
+        titleInput.addEventListener("input", () => { demo.title = titleInput.value; });
+        textInputEl.addEventListener("input", () => { demo.text = textInputEl.value; });
+        urlInput.addEventListener("input", () => { demo.url = urlInput.value.trim(); });
+        ctaInput.addEventListener("input", () => { demo.cta = ctaInput.value; });
+        demoEl.appendChild(field("Title", titleInput));
+        demoEl.appendChild(field("Text", textInputEl));
+        demoEl.appendChild(field("Embed URL (iframe src)", urlInput));
+        demoEl.appendChild(field("Button label", ctaInput));
+        demoEl.appendChild(removeBtn(() => { content.demos.items.splice(i, 1); renderDemos(); }));
+        demosList.appendChild(demoEl);
+      });
+    }
+    renderDemos();
+    demosBlock.appendChild(addBtn("Add demo", () => {
+      content.demos.items.push({ title: "", text: "", url: "", cta: "Launch demo" });
+      renderDemos();
+    }));
+    app.appendChild(demosBlock);
+  }
+
   /* experience */
   const expBlock = block("Experience");
   const expKicker = textInput(content.experience.kicker);

@@ -99,6 +99,24 @@
       }
     ]
   },
+  "demos": {
+    "kicker": "Interactive",
+    "title": "Live demos",
+    "items": [
+      {
+        "title": "THL Health Data ETL",
+        "text": "A live Metabase dashboard built on five years of real Finnish primary-care data: visit trends, ICD-10 breakdowns, and the AI-flagged anomalies my pipeline detects.",
+        "url": "",
+        "cta": "Launch dashboard"
+      },
+      {
+        "title": "Healthcare RAG Assistant",
+        "text": "Ask a clinical question and get an answer grounded in Kaypa hoito care guidelines, with the source document and page cited for every claim.",
+        "url": "",
+        "cta": "Launch assistant"
+      }
+    ]
+  },
   "skills": {
     "kicker": "Toolbox",
     "title": "Skills",

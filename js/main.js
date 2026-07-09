@@ -101,6 +101,40 @@ function renderContent(c) {
     box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${box.dataset.yt}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
   });
 
+  /* live demos */
+  if (c.demos) {
+    document.querySelector("#demos .section-kicker").textContent = c.demos.kicker;
+    document.querySelector(".demos-title").textContent = c.demos.title;
+    const demoGrid = document.querySelector(".demo-grid");
+    demoGrid.innerHTML = "";
+    c.demos.items.forEach((demo) => {
+      const article = document.createElement("article");
+      article.className = "demo";
+      const launch = demo.url
+        ? `<button class="demo-launch">${demo.cta || "Launch demo"} &rarr;</button>`
+        : `<span class="demo-pending">Publishing soon</span>`;
+      article.innerHTML = `
+        <div class="demo-head">
+          <h3>${demo.title}</h3>
+          <p>${demo.text}</p>
+        </div>
+        <div class="demo-frame" data-src="${demo.url || ""}">
+          <div class="demo-preview">${launch}</div>
+        </div>`;
+      demoGrid.appendChild(article);
+    });
+    /* click-to-load: the iframe (and any Groq usage) only starts on click */
+    demoGrid.addEventListener("click", (e) => {
+      const btn = e.target.closest(".demo-launch");
+      if (!btn) return;
+      const frame = btn.closest(".demo-frame");
+      if (!frame || frame.classList.contains("loaded") || !frame.dataset.src) return;
+      frame.classList.add("loaded");
+      frame.innerHTML =
+        `<iframe src="${frame.dataset.src}" allow="fullscreen" loading="lazy"></iframe>`;
+    });
+  }
+
   /* skills */
   document.querySelector("#skills .section-kicker").textContent = c.skills.kicker;
   document.querySelector(".skills-title").textContent = c.skills.title;
@@ -364,6 +398,23 @@ function buildScroll() {
     duration: 0.8,
     ease: "power3.out",
     scrollTrigger: { trigger: ".cards", start: "top 82%" }
+  });
+
+  /* live demos */
+  gsap.from(".demos-title", {
+    y: 50,
+    autoAlpha: 0,
+    duration: 0.8,
+    ease: "power3.out",
+    scrollTrigger: { trigger: "#demos", start: "top 80%" }
+  });
+  gsap.from(".demo", {
+    y: 40,
+    autoAlpha: 0,
+    stagger: 0.15,
+    duration: 0.8,
+    ease: "power3.out",
+    scrollTrigger: { trigger: ".demo-grid", start: "top 80%" }
   });
 
   /* experience */
