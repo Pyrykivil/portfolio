@@ -106,7 +106,7 @@
       {
         "title": "THL Health Data ETL",
         "text": "A live Metabase dashboard built on five years of real Finnish primary-care data: visit trends, ICD-10 breakdowns, and the AI-flagged anomalies my pipeline detects.",
-        "url": "",
+        "url": "https://etl.pyrykiviluoma.fi/public/dashboard/04ebc926-723d-4b62-8d46-3bd1a383e853#theme=night&titled=false&bordered=false",
         "cta": "Launch dashboard"
       },
       {
