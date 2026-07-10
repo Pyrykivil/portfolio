@@ -88,7 +88,7 @@
       },
       {
         "title": "GE Healthcare Test Automation",
-        "text": "Performance and reliability testing for patient monitoring software in R&D. I write automated Python and Robot Framework suites in a Scrum team and present performance metrics to the principal engineer to support technical decisions.",
+        "text": "Performance and reliability testing for patient monitoring software in R&D. I write and refactor the automated Python and Robot Framework suites behind accelerated clinical stress and reboot testing, and present performance metrics to the principal engineer to support technical decisions.",
         "tags": [
           "Robot Framework",
           "Python",
