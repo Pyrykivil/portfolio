@@ -126,26 +126,26 @@
         <article class="card">
           <span class="card-index">01</span>
           <h3>THL Health Data ETL</h3>
-          <p>Full pipeline on real primary care visit data from THL's Avohilmo API: PostgreSQL staging and analytics layers, Llama 3.1 anomaly detection, Metabase dashboards.</p>
+          <p>Full pipeline on five years of real primary care visits from THL's Avohilmo API: PostgreSQL staging and analytics layers, Metabase dashboards, and Llama 3.1 anomaly detection that automatically flagged the COVID-era code collapse from 114k visits to 3k.</p>
           <ul class="tags"><li>Python</li><li>PostgreSQL</li><li>Docker</li><li>Metabase</li></ul>
           <a class="card-link" href="https://github.com/Pyrykivil/thl-etl" target="_blank" rel="noopener">View on GitHub</a>
         </article>
         <article class="card">
           <span class="card-index">02</span>
-          <h3>Live ECG Analyzer</h3>
-          <p>Real-time medical signal processing for cardiac monitoring.</p>
-          <ul class="tags"><li>Signal processing</li><li>Real-time</li><li>Python</li></ul>
+          <h3>Waveform Lag Analyzer</h3>
+          <p>Built at GE Healthcare to prove a regulatory requirement: waveforms on patient monitors must render with no lag visible to the human eye. OpenCV splits the video feed into per-graph bands and scans each one column by column with center-of-mass and relative-level analysis. Now used in R&amp;D verification.</p>
+          <ul class="tags"><li>OpenCV</li><li>NumPy</li><li>pandas</li><li>Computer vision</li></ul>
         </article>
         <article class="card">
           <span class="card-index">03</span>
           <h3>GE Healthcare Test Automation</h3>
-          <p>Performance and reliability testing for medical devices in R&amp;D. Automated Python and Robot Framework suites, plus a waveform analysis tool I built that is now used in the verification process.</p>
+          <p>Performance and reliability testing for patient monitoring software in R&amp;D. I write automated Python and Robot Framework suites in a Scrum team and present performance metrics to the principal engineer to support technical decisions.</p>
           <ul class="tags"><li>Robot Framework</li><li>Python</li><li>Jenkins</li><li>CI/CD</li></ul>
         </article>
         <article class="card">
           <span class="card-index">04</span>
           <h3>Healthcare RAG Assistant</h3>
-          <p>Source-traceable answers from clinical care guidelines. Every response cites document and page, with a full audit log for EU AI Act compliance.</p>
+          <p>Source-traceable answers from 14 Käypä hoito clinical guidelines. Every response cites document and page, with a full audit log designed for EU AI Act compliance.</p>
           <ul class="tags"><li>LangChain</li><li>ChromaDB</li><li>RAG</li><li>Docker</li></ul>
         </article>
       </div>
@@ -166,7 +166,7 @@
     <ul class="exp-rows">
       <li class="exp-row">
         <span class="exp-org">GE Healthcare</span>
-        <span class="exp-role">Performance &amp; Reliability Testing Intern, R&amp;D software verification</span>
+        <span class="exp-role">Performance &amp; Reliability Testing Intern · patient monitoring R&amp;D · built a waveform analysis tool now used in verification</span>
         <span class="exp-date">Feb 2026 - Present</span>
       </li>
       <li class="exp-row">
@@ -201,7 +201,7 @@
 
   <!-- FINALE -->
   <section id="contact" class="finale">
-    <p class="section-kicker">Available for healthcare AI projects</p>
+    <p class="section-kicker">Open to internships and healthcare AI projects</p>
     <h2 class="finale-title">Let's build your next<br><em>healthcare AI</em> solution</h2>
     <div class="finale-actions">
       <a class="btn btn-primary" href="mailto:pyry.kiviluoma@aalto.fi?subject=Healthcare%20AI%20project">Schedule a call</a>
