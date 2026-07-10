@@ -9,6 +9,7 @@ Usage:
 """
 
 import argparse
+import hmac
 import http.server
 import json
 import os
@@ -27,7 +28,6 @@ BACKUPS_DIR = PORTFOLIO_ROOT / "content.backups"
 MESSAGES_DIR = PORTFOLIO_ROOT / "messages"
 MESSAGES_PATH = MESSAGES_DIR / "messages.jsonl"
 
-DEFAULT_PASSWORD = "pyry-admin"
 REQUIRED_KEYS = ("hero", "stats", "work", "experience", "skills")
 
 RATE_LIMIT_SECONDS = 30
@@ -40,10 +40,27 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(PORTFOLIO_ROOT), **kwargs)
 
     def end_headers(self):
+        path = self.path.split("?")[0]
         # force revalidation so admin edits show up on plain reload
-        if self.path.split("?")[0].endswith((".html", ".css", ".js", ".json", "/")):
+        if path.endswith((".html", ".css", ".js", ".json", "/")):
             self.send_header("Cache-Control", "no-cache")
+        # frames and clips never change without a rename: cache hard
+        elif path.startswith("/assets/frames/") or path.startswith("/assets/video/"):
+            self.send_header("Cache-Control", "public, max-age=31536000, immutable")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
         super().end_headers()
+
+    def _check_admin(self):
+        """Admin auth. Fails closed: no ADMIN_PASSWORD, no admin API."""
+        admin_password = os.environ.get("ADMIN_PASSWORD", "")
+        if not admin_password:
+            self._send_text(503, "Admin API disabled: ADMIN_PASSWORD is not set")
+            return False
+        if not hmac.compare_digest(self.headers.get("X-Admin-Key", ""), admin_password):
+            self._send_text(401, "Unauthorized: invalid admin key")
+            return False
+        return True
 
     def do_GET(self):
         if self.path == "/admin":
@@ -103,9 +120,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._send_text(400, "A valid email and a message under 4000 characters are required")
             return
 
-        client_ip = self.client_address[0]
+        # behind the Cloudflare tunnel every socket has the tunnel container's
+        # IP, so the real per-visitor address arrives in CF-Connecting-IP
+        client_ip = self.headers.get("CF-Connecting-IP") or self.client_address[0]
         now = time.time()
         with _rate_lock:
+            if len(_last_post_by_ip) > 1000:
+                cutoff = now - RATE_LIMIT_SECONDS
+                for ip, ts in list(_last_post_by_ip.items()):
+                    if ts < cutoff:
+                        del _last_post_by_ip[ip]
             last = _last_post_by_ip.get(client_ip, 0)
             if now - last < RATE_LIMIT_SECONDS:
                 self._send_text(429, "Please wait a moment before sending another note")
@@ -127,9 +151,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self._send_json(200, {"ok": True, "emailed": emailed})
 
     def handle_list_messages(self):
-        admin_password = os.environ.get("ADMIN_PASSWORD", DEFAULT_PASSWORD)
-        if self.headers.get("X-Admin-Key", "") != admin_password:
-            self._send_text(401, "Unauthorized: invalid admin key")
+        if not self._check_admin():
             return
         items = []
         if MESSAGES_PATH.exists():
@@ -146,13 +168,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self._send_json(200, items)
 
     def handle_save_content(self):
-        admin_password = os.environ.get("ADMIN_PASSWORD", DEFAULT_PASSWORD)
-        provided_key = self.headers.get("X-Admin-Key", "")
-        if provided_key != admin_password:
-            self.send_response(401)
-            self.send_header("Content-Type", "text/plain; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(b"Unauthorized: invalid admin key")
+        if not self._check_admin():
             return
 
         length = int(self.headers.get("Content-Length", 0))
@@ -228,8 +244,8 @@ def main():
     parser.add_argument("--port", type=int, default=8641)
     args = parser.parse_args()
 
-    if os.environ.get("ADMIN_PASSWORD", DEFAULT_PASSWORD) == DEFAULT_PASSWORD:
-        print("WARNING: using default admin password. Set ADMIN_PASSWORD to change it.")
+    if not os.environ.get("ADMIN_PASSWORD"):
+        print("WARNING: ADMIN_PASSWORD not set; the admin API (/api/content, /api/messages) is disabled.")
 
     # threaded server: the browser fetches 121 hero frames in parallel
     with http.server.ThreadingHTTPServer(("", args.port), Handler) as httpd:

@@ -33,8 +33,9 @@ python scripts/serve.py
 ```
 
 Then open `http://localhost:8641/admin/`, set the admin key (matches the
-`ADMIN_PASSWORD` env var on the server, default `pyry-admin`), edit the
-fields, and click "Save changes". Reload the site to see the update.
+`ADMIN_PASSWORD` env var on the server; if it is not set, the admin API is
+disabled), edit the fields, and click "Save changes". Reload the site to see
+the update.
 
 Each save writes a timestamped backup to `content.backups/` before
 overwriting `content.json`. If you're hosting statically without the

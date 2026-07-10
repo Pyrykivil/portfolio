@@ -94,7 +94,10 @@
           "RAG",
           "Docker"
         ],
-        "link": null,
+        "link": {
+          "label": "View on GitHub",
+          "href": "https://github.com/Pyrykivil/nhg-rag-demo"
+        },
         "youtube": null
       }
     ]
@@ -206,7 +209,8 @@
     "secondary": {
       "label": "See work",
       "href": "#work"
-    }
+    },
+    "cv": null
   },
   "footer": {
     "copyright": "(c) 2026 Pyry Kiviluoma",

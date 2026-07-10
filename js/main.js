@@ -4,6 +4,15 @@ const MEDIA = window.PORTFOLIO_MEDIA || {};
 const SEQ = MEDIA.hero || { frames: 0 };
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/* small screens and data-saver connections load every 2nd frame; the
+   crossfade in drawFrame hides the bigger steps */
+const FRAME_STRIDE =
+  window.matchMedia("(max-width: 899px)").matches ||
+  (navigator.connection && navigator.connection.saveData)
+    ? 2
+    : 1;
+const FRAME_COUNT = SEQ.frames ? Math.floor((SEQ.frames - 1) / FRAME_STRIDE) + 1 : 0;
+
 /* ---------- smooth scroll ---------- */
 const lenis = new Lenis({ lerp: 0.09 });
 window.lenis = lenis;
@@ -31,6 +40,14 @@ async function loadContent() {
   }
 }
 
+/* content.json is admin-edited, not visitor input, but escape anyway so a
+   compromised admin key cannot inject script into every visitor's page */
+function esc(v) {
+  return String(v == null ? "" : v).replace(/[&<>"']/g, (ch) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+  ));
+}
+
 function renderContent(c) {
   if (!c) return;
 
@@ -48,10 +65,10 @@ function renderContent(c) {
   c.stats.forEach((s) => {
     const stat = document.createElement("div");
     stat.className = "stat";
-    const unit = s.unit ? `<span class="stat-unit">${s.unit}</span>` : "";
+    const unit = s.unit ? `<span class="stat-unit">${esc(s.unit)}</span>` : "";
     stat.innerHTML = `
-      <div class="stat-value"><span class="count" data-value="${s.value}" data-decimals="${s.decimals}">0</span>${unit}</div>
-      <div class="stat-label">${s.label}</div>`;
+      <div class="stat-value"><span class="count" data-value="${esc(s.value)}" data-decimals="${esc(s.decimals)}">0</span>${unit}</div>
+      <div class="stat-label">${esc(s.label)}</div>`;
     statsSection.appendChild(stat);
   });
 
@@ -64,8 +81,8 @@ function renderContent(c) {
     pillar.className = "pillar";
     pillar.innerHTML = `
       <span class="pillar-index">${String(i + 1).padStart(2, "0")}</span>
-      <h2>${item.title}</h2>
-      <p>${item.text}</p>`;
+      <h2>${esc(item.title)}</h2>
+      <p>${esc(item.text)}</p>`;
     pillarsWrap.appendChild(pillar);
   });
 
@@ -77,17 +94,19 @@ function renderContent(c) {
   c.work.cards.forEach((card, i) => {
     const article = document.createElement("article");
     article.className = "card";
-    const tags = card.tags.map((t) => `<li>${t}</li>`).join("");
-    const link = card.link
-      ? `<a class="card-link" href="${card.link.href}" target="_blank" rel="noopener">${card.link.label}</a>`
+    const tags = card.tags.map((t) => `<li>${esc(t)}</li>`).join("");
+    const linkHref = card.link && /^(https?:|mailto:|#)/.test(card.link.href) ? card.link.href : "";
+    const link = linkHref
+      ? `<a class="card-link" href="${esc(linkHref)}" target="_blank" rel="noopener">${esc(card.link.label)}</a>`
       : "";
-    const video = card.youtube
-      ? `<div class="card-video" data-yt="${card.youtube}" style="background-image:url('https://i.ytimg.com/vi/${card.youtube}/hqdefault.jpg')"><button class="card-video-play" aria-label="Play demo video"></button></div>`
+    const ytId = card.youtube && /^[\w-]{6,20}$/.test(card.youtube) ? card.youtube : "";
+    const video = ytId
+      ? `<div class="card-video" data-yt="${ytId}" style="background-image:url('https://i.ytimg.com/vi/${ytId}/hqdefault.jpg')"><button class="card-video-play" aria-label="Play demo video"></button></div>`
       : "";
     article.innerHTML = `
       <span class="card-index">${String(i + 1).padStart(2, "0")}</span>
-      <h3>${card.title}</h3>
-      <p>${card.text}</p>
+      <h3>${esc(card.title)}</h3>
+      <p>${esc(card.text)}</p>
       <ul class="tags">${tags}</ul>
       ${video}
       ${link}`;
@@ -98,7 +117,7 @@ function renderContent(c) {
     const box = e.target.closest(".card-video");
     if (!box || box.classList.contains("playing")) return;
     box.classList.add("playing");
-    box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${box.dataset.yt}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${box.dataset.yt}?autoplay=1" title="Project demo video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
   });
 
   /* live demos */
@@ -110,15 +129,16 @@ function renderContent(c) {
     c.demos.items.forEach((demo) => {
       const article = document.createElement("article");
       article.className = "demo";
-      const launch = demo.url
-        ? `<button class="demo-launch">${demo.cta || "Launch demo"} &rarr;</button>`
+      const demoUrl = demo.url && /^https?:\/\//.test(demo.url) ? demo.url : "";
+      const launch = demoUrl
+        ? `<button class="demo-launch">${esc(demo.cta || "Launch demo")} &rarr;</button>`
         : `<span class="demo-pending">Publishing soon</span>`;
       article.innerHTML = `
         <div class="demo-head">
-          <h3>${demo.title}</h3>
-          <p>${demo.text}</p>
+          <h3>${esc(demo.title)}</h3>
+          <p>${esc(demo.text)}</p>
         </div>
-        <div class="demo-frame" data-src="${demo.url || ""}" data-zoom="${demo.zoom || ""}">
+        <div class="demo-frame" data-src="${esc(demoUrl)}" data-zoom="${esc(demo.zoom || "")}" data-title="${esc(demo.title || "Live demo")}">
           <div class="demo-preview">${launch}</div>
         </div>`;
       demoGrid.appendChild(article);
@@ -136,7 +156,7 @@ function renderContent(c) {
         ? ` style="width:${(100 / zoom).toFixed(2)}%;height:${(100 / zoom).toFixed(2)}%;transform:scale(${zoom});transform-origin:0 0"`
         : "";
       frame.innerHTML =
-        `<iframe src="${frame.dataset.src}"${style} allow="fullscreen" loading="lazy"></iframe>`;
+        `<iframe src="${esc(frame.dataset.src)}" title="${esc(frame.dataset.title || "Live demo")}"${style} allow="fullscreen" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`;
     });
   }
 
@@ -148,8 +168,8 @@ function renderContent(c) {
   c.skills.groups.forEach((group) => {
     const div = document.createElement("div");
     div.className = "skill-group";
-    const items = group.items.map((item) => `<li>${item}</li>`).join("");
-    div.innerHTML = `<h3>${group.category}</h3><ul class="tags">${items}</ul>`;
+    const items = group.items.map((item) => `<li>${esc(item)}</li>`).join("");
+    div.innerHTML = `<h3>${esc(group.category)}</h3><ul class="tags">${items}</ul>`;
     skillGroups.appendChild(div);
   });
 
@@ -162,22 +182,36 @@ function renderContent(c) {
     const li = document.createElement("li");
     li.className = "exp-row";
     li.innerHTML = `
-      <span class="exp-org">${row.org}</span>
-      <span class="exp-role">${row.role}</span>
-      <span class="exp-date">${row.date}</span>`;
+      <span class="exp-org">${esc(row.org)}</span>
+      <span class="exp-role">${esc(row.role)}</span>
+      <span class="exp-date">${esc(row.date)}</span>`;
     expRows.appendChild(li);
   });
 
   /* finale */
   document.querySelector("#contact .section-kicker").textContent = c.finale.kicker;
   document.querySelector(".finale-title").innerHTML =
-    `${c.finale.titlePre}<br><em>${c.finale.titleEm}</em> ${c.finale.titlePost}`;
+    `${esc(c.finale.titlePre)}<br><em>${esc(c.finale.titleEm)}</em> ${esc(c.finale.titlePost)}`;
   const primaryBtn = document.querySelector(".btn-primary");
   primaryBtn.textContent = c.finale.primary.label;
   primaryBtn.href = c.finale.primary.href;
   const secondaryBtn = document.querySelector(".btn-ghost");
   secondaryBtn.textContent = c.finale.secondary.label;
   secondaryBtn.href = c.finale.secondary.href;
+
+  /* CV download: rendered only when content.json sets finale.cv to a path */
+  if (c.finale.cv) {
+    const cvBtn = document.createElement("a");
+    cvBtn.className = "btn btn-ghost";
+    cvBtn.href = c.finale.cv;
+    cvBtn.textContent = "Download CV";
+    document.querySelector(".finale-actions").appendChild(cvBtn);
+    const navCv = document.createElement("a");
+    navCv.href = c.finale.cv;
+    navCv.textContent = "CV";
+    const navLinks = document.querySelector(".nav-links");
+    navLinks.insertBefore(navCv, navLinks.querySelector('a[href*="linkedin"]'));
+  }
 
   /* footer */
   document.querySelector(".footer span").textContent = c.footer.copyright;
@@ -218,12 +252,12 @@ function setProgress(p) {
 }
 
 function frameSrc(i) {
-  return SEQ.base + String(i + 1).padStart(SEQ.pad, "0") + SEQ.ext;
+  return SEQ.base + String(i * FRAME_STRIDE + 1).padStart(SEQ.pad, "0") + SEQ.ext;
 }
 
 function preloadFrames() {
   return new Promise((resolve) => {
-    if (!SEQ.frames) {
+    if (!FRAME_COUNT) {
       /* setTimeout instead of a tween: rAF is paused in hidden tabs and would stall init */
       setProgress(1);
       setTimeout(resolve, 250);
@@ -232,10 +266,10 @@ function preloadFrames() {
     let done = 0;
     const finish = () => {
       done++;
-      setProgress(done / SEQ.frames);
-      if (done === SEQ.frames) resolve();
+      setProgress(done / FRAME_COUNT);
+      if (done === FRAME_COUNT) resolve();
     };
-    for (let i = 0; i < SEQ.frames; i++) {
+    for (let i = 0; i < FRAME_COUNT; i++) {
       const img = new Image();
       img.onload = () => {
         /* pre-decode into a bitmap so scrubbing never decodes on the main thread */
@@ -283,10 +317,10 @@ function blit(img, alpha) {
 /* drawFrame accepts a fractional index and crossfades between the two nearest
    frames, so the arc where the source clip speeds up smears instead of stepping */
 function drawFrame(f) {
-  if (!SEQ.frames) { drawFallback(); return; }
-  const clamped = Math.max(0, Math.min(SEQ.frames - 1, f));
+  if (!FRAME_COUNT) { drawFallback(); return; }
+  const clamped = Math.max(0, Math.min(FRAME_COUNT - 1, f));
   const i0 = Math.floor(clamped);
-  const i1 = Math.min(SEQ.frames - 1, i0 + 1);
+  const i1 = Math.min(FRAME_COUNT - 1, i0 + 1);
   const t = clamped - i0;
   const cw = canvas.width;
   const ch = canvas.height;
@@ -310,7 +344,7 @@ function drawFallback() {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, cw, ch);
 }
-if (!SEQ.frames && !reduceMotion) gsap.ticker.add(drawFallback);
+if (!FRAME_COUNT && !reduceMotion) gsap.ticker.add(drawFallback);
 
 /* ---------- intro reveal ---------- */
 function reveal() {
@@ -336,8 +370,8 @@ function buildScroll() {
       pin: true,
       scrub: 0.4,
       onUpdate(self) {
-        if (!SEQ.frames) return;
-        const f = self.progress * (SEQ.frames - 1);
+        if (!FRAME_COUNT) return;
+        const f = self.progress * (FRAME_COUNT - 1);
         /* redraw only on a meaningful move; blend needs the fractional position */
         if (Math.abs(f - frameIndex) > 0.02) { frameIndex = f; drawFrame(f); }
       }

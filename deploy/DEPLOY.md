@@ -49,6 +49,10 @@ the group membership.
    - Hostname `etl.pyrykiviluoma.fi` -> Service `http://metabase:3000`
 5. Save. Cloudflare automatically creates the CNAME DNS records for these
    hostnames pointing at the tunnel.
+6. Optional hardening: in the Cloudflare dashboard under SSL/TLS -> Edge
+   Certificates, enable "Always Use HTTPS" and HSTS (start with a short
+   max-age like 1 day; only raise it once you are sure HTTPS works
+   everywhere).
 
 ## 4. Clone the three repos into ~/apps
 
@@ -163,8 +167,8 @@ the sense that the underlying scripts TRUNCATE/re-index before writing.
 - Visit `https://pyrykiviluoma.fi/admin/` to open the admin panel.
 - Edits are saved via `POST /api/content`, authenticated with the
   `X-Admin-Key` header, which must match the `ADMIN_PASSWORD` value from
-  `.env`. If `ADMIN_PASSWORD` is unset, `serve.py` falls back to a default
-  password and prints a warning in its logs. always set a real one.
+  `.env`. If `ADMIN_PASSWORD` is unset, the admin API (`/api/content`,
+  `/api/messages`) is disabled and `serve.py` prints a warning in its logs.
 - On every successful save, `serve.py` copies the current `content.json`
   into `~/apps/portfolio/content.backups/content-<timestamp>.json` before
   overwriting it, so you can recover a previous version by copying a backup
