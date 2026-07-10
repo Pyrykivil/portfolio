@@ -75,6 +75,18 @@
         "youtube": null
       },
       {
+        "title": "Semantic Defect Search",
+        "text": "Hybrid search over a decade of defect reports at GE Healthcare, answering one question: have we seen this before? Dense, BM25 and ColBERT retrieval fused with Reciprocal Rank Fusion and a cross-encoder reranker, with log-line normalization that pushed retrieval accuracy into the mid-90s. Every design choice was measured against a recall@k evaluation harness. Runs on-prem in Docker and is queried from a shared CLI or straight from AI coding assistants over MCP.",
+        "tags": [
+          "Hybrid retrieval",
+          "Reranking",
+          "Docker",
+          "MCP"
+        ],
+        "link": null,
+        "youtube": null
+      },
+      {
         "title": "GE Healthcare Test Automation",
         "text": "Performance and reliability testing for patient monitoring software in R&D. I write automated Python and Robot Framework suites in a Scrum team and present performance metrics to the principal engineer to support technical decisions.",
         "tags": [
