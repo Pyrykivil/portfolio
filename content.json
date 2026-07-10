@@ -31,15 +31,15 @@
     "items": [
       {
         "title": "AI Decision Support Systems",
-        "text": "RAG assistants and anomaly detection that clinicians can trace, audit and trust."
+        "text": "RAG assistants, semantic search and anomaly detection with sources you can trace and audit. Built eval-first: every design choice is measured against a benchmark, not a hunch."
       },
       {
         "title": "Test Automation & Quality",
-        "text": "Production-grade automated testing for medical device R&D. Quality that holds up in regulated environments."
+        "text": "Stress, reboot and performance suites for patient monitoring software at GE Healthcare R&D, plus verification tooling the team has adopted. Quality that holds up in regulated environments."
       },
       {
-        "title": "Teaching & Explaining Complex Things",
-        "text": "Teaching assistant at Aalto: probability and statistics, classical physics, and electricity and magnetism. I make hard concepts land."
+        "title": "Teaching & Technical Communication",
+        "text": "Teaching assistant at Aalto: probability and statistics, classical physics, electricity and magnetism. At GE I present performance findings to the principal engineer. I make hard concepts land."
       }
     ]
   },
