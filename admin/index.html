@@ -500,6 +500,39 @@ function render() {
   finaleBlock.appendChild(finaleSecondaryRow);
   app.appendChild(finaleBlock);
 
+  /* CV upload */
+  const cvBlock = block("CV");
+  const cvCurrent = el("p", {
+    text: content.finale.cv
+      ? "Published: " + content.finale.cv
+      : "No CV published yet. Upload a PDF to add a Download CV button to the site."
+  });
+  cvCurrent.style.cssText = "font-size:0.85rem;color:var(--muted);margin-bottom:0.9rem;";
+  const cvFile = el("input", { type: "file", accept: "application/pdf" });
+  const cvUploadBtn = addBtn("Upload CV (PDF)", async () => {
+    const f = cvFile.files[0];
+    if (!f) { setStatus("Choose a PDF file first", "error"); return; }
+    setStatus("Uploading CV...");
+    try {
+      const res = await fetch("/api/cv", {
+        method: "POST",
+        headers: { "Content-Type": "application/pdf", "X-Admin-Key": adminKeyInput.value },
+        body: f
+      });
+      if (!res.ok) throw new Error((await res.text()) || ("Upload failed (" + res.status + ")"));
+      const body = await res.json();
+      content.finale.cv = body.path;
+      cvCurrent.textContent = "Published: " + body.path;
+      setStatus('CV uploaded. Click "Save changes" to publish the download button.', "ok");
+    } catch (e) {
+      setStatus("CV upload failed: " + e.message, "error");
+    }
+  });
+  cvBlock.appendChild(cvCurrent);
+  cvBlock.appendChild(field("PDF file", cvFile));
+  cvBlock.appendChild(cvUploadBtn);
+  app.appendChild(cvBlock);
+
   /* footer */
   const footerBlock = block("Footer");
   const footerCopyright = textInput(content.footer.copyright);

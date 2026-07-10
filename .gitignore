@@ -6,6 +6,9 @@ content.backups/
 messages/
 NEXT_SESSION.md
 
+# CV pdf lives on the server, uploaded via /admin/ (POST /api/cv)
+assets/cv/
+
 # Secrets (only .env.example is tracked)
 .env
 deploy/.env

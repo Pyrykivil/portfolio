@@ -27,6 +27,9 @@ CONTENT_PATH = PORTFOLIO_ROOT / "content.json"
 BACKUPS_DIR = PORTFOLIO_ROOT / "content.backups"
 MESSAGES_DIR = PORTFOLIO_ROOT / "messages"
 MESSAGES_PATH = MESSAGES_DIR / "messages.jsonl"
+CV_DIR = PORTFOLIO_ROOT / "assets" / "cv"
+CV_PATH = CV_DIR / "pyry-kiviluoma-cv.pdf"
+CV_MAX_BYTES = 8 * 1024 * 1024
 
 REQUIRED_KEYS = ("hero", "stats", "work", "experience", "skills")
 
@@ -47,6 +50,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         # frames and clips never change without a rename: cache hard
         elif path.startswith("/assets/frames/") or path.startswith("/assets/video/"):
             self.send_header("Cache-Control", "public, max-age=31536000, immutable")
+        # the CV is replaced in place via /api/cv: always revalidate
+        elif path.startswith("/assets/cv/"):
+            self.send_header("Cache-Control", "no-cache")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
         super().end_headers()
@@ -79,6 +85,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if self.path == "/api/contact":
             self.handle_contact()
+            return
+        if self.path == "/api/cv":
+            self.handle_upload_cv()
             return
         self.send_error(404, "Not found")
 
@@ -166,6 +175,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 except json.JSONDecodeError:
                     continue
         self._send_json(200, items)
+
+    def handle_upload_cv(self):
+        if not self._check_admin():
+            return
+        length = int(self.headers.get("Content-Length", 0))
+        if length <= 0 or length > CV_MAX_BYTES:
+            self._send_text(400, "Expected a PDF up to 8 MB")
+            return
+        body = self.rfile.read(length)
+        if not body.startswith(b"%PDF-"):
+            self._send_text(400, "File is not a PDF")
+            return
+        CV_DIR.mkdir(parents=True, exist_ok=True)
+        with open(CV_PATH, "wb") as f:
+            f.write(body)
+        rel_path = "assets/cv/" + CV_PATH.name
+        self._send_json(200, {"ok": True, "path": rel_path})
 
     def handle_save_content(self):
         if not self._check_admin():
